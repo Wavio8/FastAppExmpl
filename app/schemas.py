@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Union
 
 class IndexItem(BaseModel):
     id: str = Field(..., description="Уникальный ID документа")
@@ -25,3 +25,11 @@ class HealthResponse(BaseModel):
     status: str
     redis: str
     qdrant: str
+
+
+class Item(BaseModel):
+    id: Union[int, str]
+    text: str
+
+class ItemList(BaseModel):
+    items: List[Item]

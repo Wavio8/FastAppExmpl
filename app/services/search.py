@@ -2,6 +2,7 @@ from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, VectorParams, PointStruct
 from typing import Iterable
 from app.config import settings
+from app.services.embeddings import embed
 from app.services.embeddings import embed_texts
 
 def ensure_collection(client: QdrantClient, vector_size: int):
@@ -13,16 +14,24 @@ def ensure_collection(client: QdrantClient, vector_size: int):
             vectors_config=VectorParams(size=vector_size, distance=Distance.COSINE),
         )
 
-def index_items(client: QdrantClient, items: list[dict]):
-    texts = [it["text"] for it in items]
-    ids = [it["id"] for it in items]
-    vectors = embed_texts(texts)
-    ensure_collection(client, vector_size=len(vectors[0]))
-    points: Iterable[PointStruct] = (
-        PointStruct(id=ids[i], vector=vectors[i], payload={"text": texts[i]})
-        for i in range(len(ids))
+def index_items(client, items):
+    texts = [it.text for it in items]
+    ids = [it.id for it in items]
+    embeddings = embed(texts)
+
+    points = [
+        PointStruct(id=id_, vector=vec, payload={"text": txt})
+        for id_, txt, vec in zip(ids, texts, embeddings)
+    ]
+
+    client.upsert(
+        collection_name=settings.qdrant_collection,
+        points=points
     )
-    client.upsert(collection_name=settings.qdrant_collection, points=points)
+
+    return len(points)
+
+
 
 def search(client: QdrantClient, query: str, top_k: int = 5) -> list[dict]:
     vec = embed_texts([query])[0]

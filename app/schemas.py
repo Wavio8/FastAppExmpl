@@ -33,3 +33,15 @@ class Item(BaseModel):
 
 class ItemList(BaseModel):
     items: List[Item]
+
+
+class IrisFeatures(BaseModel):
+    sepal_length: float
+    sepal_width: float
+    petal_length: float
+    petal_width: float
+
+
+class IrisPredictResponse(BaseModel):
+    predictions: List[float] | List[int] | List[str]
+    latency_sec: float | None = None
